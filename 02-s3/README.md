@@ -315,9 +315,13 @@ Delete one of the objects that you changed.
 
 _Can you still retrieve old versions of the object you removed?_
 
+#### yes, using --version-id
+
 ##### Question: Deleting All Versions
 
 _How would you delete all versions?_
+
+### It appears that only the console, AWS SDK, and REST API can delete versions
 
 #### Lab 2.3.3: Tagging S3 Resources
 
@@ -329,6 +333,8 @@ through the CLI or the console.
 
 _Can you change a single tag on a bucket or object, or do you have to change
 all its tags at once?_
+
+#### Yes, a single tag on an object is possible.
 
 (See `aws:cloudformation:stack-id` and other AWS-managed tags.)
 
