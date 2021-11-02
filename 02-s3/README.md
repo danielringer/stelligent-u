@@ -190,6 +190,8 @@ directory with the "aws s3 sync" command.
 _After this, can you download one of your files from the bucket without using
 your API credentials?_
 
+#### I was able to using --no-sign-request
+
 #### Lab 2.2.2: Use the CLI to Restrict Access to Private Data
 
 You just made "private.txt" publicly readable. Ensure that only the
@@ -201,11 +203,15 @@ permissions of the other files.
 _How could you use "aws s3 cp" or "aws s3 sync" command to modify the
 permissions on the file?_
 
+#### --acl private
+
 (Hint: see the list of [Canned ACLs](https://docs.aws.amazon.com/AmazonS3/latest/dev/acl-overview.html#canned-acl).)
 
 ##### Question: Changing Permissions
 
 _Is there a way you can change the permissions on the file without re-uploading it?_
+
+#### sync did not reupload the file
 
 #### Lab 2.2.3: Using the API from the CLI
 
@@ -234,9 +240,13 @@ file and read "private.txt".
 _What do you see when you try to read the existing bucket policy before you
 replace it?_
 
+#### Running get-bucket-policy shows the appropropriate policy I previously assigned
+
 #### Question: Default Permissions
 
 _How do the default permissions differ from the policy you're setting?_
+
+#### Everything was previously set to private
 
 #### Lab 2.2.4: Using CloudFormation
 
