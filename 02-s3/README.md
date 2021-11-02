@@ -321,7 +321,7 @@ _Can you still retrieve old versions of the object you removed?_
 
 _How would you delete all versions?_
 
-### It appears that only the console, AWS SDK, and REST API can delete versions
+#### It appears that only the console, AWS SDK, and REST API can delete versions
 
 #### Lab 2.3.3: Tagging S3 Resources
 
