@@ -1,0 +1,10 @@
+[
+    {
+        "ParameterKey":"BucketParameter",
+        "ParameterValue": "gr-m02u2-train-use1"
+    },
+    {
+        "ParameterKey":"UserParameter",
+        "ParameterValue": "ringer-s3adminuser"
+    }
+]

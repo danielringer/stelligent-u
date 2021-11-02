@@ -1,0 +1,10 @@
+{
+    "Statement": [
+       {
+          "Effect": "Allow",
+          "Principal": "*",
+          "Action": "*",
+          "Resource": "arn:aws:s3:::stelligent-u-gringer/*"
+       }
+    ]
+ }
