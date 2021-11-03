@@ -14,8 +14,6 @@ Resources:
     Type: AWS::S3::Bucket
     Properties:
       BucketName: !Ref BucketParameter
-      VersioningConfiguration:
-        Status: Enabled
 
   User:      
     Type: AWS::IAM::User
