@@ -121,20 +121,28 @@ Add an object to your bucket:
 
 _How would you copy the contents of the directory to the top level of your bucket?_
 
+#### aws s3 cp --recursive data/* s3://stelligent-u-gringer/data
+
 ##### Question: Directory Copying
 
 _How would you copy the contents and include the directory name in the s3 object
 paths?_
 
+#### aws s3 cp --recursive data/ s3://stelligent-u-gringer
+
 ##### Question: Object Access
 
 _[Can anyone else see your file yet](https://docs.aws.amazon.com/AmazonS3/latest/dev/s3-access-control.html)?_
+
+#### By default, no one else can see the contents of my bucket.
 
 For further reading, see the S3 [Access Policy Language Overview](https://docs.aws.amazon.com/AmazonS3/latest/dev/access-policy-language-overview.html).
 
 ##### Question: Sync vs Copy
 
 _What makes "sync" a better choice than "cp" for some S3 uploads?_
+
+#### Sync ensures that both directories match without copying the entire contents. It only copies what is different or missing.
 
 #### Lab 2.1.3: Exclude Private Objects When Uploading to a Bucket
 
@@ -150,6 +158,8 @@ bucket again **without including the private file**.
 
 Clean up: remove your bucket. What do you have to do before you can
 remove it?
+
+#### The bucket first must be empty.
 
 ### Retrospective 2.1
 
@@ -180,6 +190,8 @@ directory with the "aws s3 sync" command.
 _After this, can you download one of your files from the bucket without using
 your API credentials?_
 
+#### I was able to using --no-sign-request
+
 #### Lab 2.2.2: Use the CLI to Restrict Access to Private Data
 
 You just made "private.txt" publicly readable. Ensure that only the
@@ -191,11 +203,15 @@ permissions of the other files.
 _How could you use "aws s3 cp" or "aws s3 sync" command to modify the
 permissions on the file?_
 
+#### --acl private
+
 (Hint: see the list of [Canned ACLs](https://docs.aws.amazon.com/AmazonS3/latest/dev/acl-overview.html#canned-acl).)
 
 ##### Question: Changing Permissions
 
 _Is there a way you can change the permissions on the file without re-uploading it?_
+
+#### sync did not reupload the file
 
 #### Lab 2.2.3: Using the API from the CLI
 
@@ -224,9 +240,13 @@ file and read "private.txt".
 _What do you see when you try to read the existing bucket policy before you
 replace it?_
 
+#### Running get-bucket-policy shows the appropropriate policy I previously assigned
+
 #### Question: Default Permissions
 
 _How do the default permissions differ from the policy you're setting?_
+
+#### Everything was previously set to private
 
 #### Lab 2.2.4: Using CloudFormation
 
@@ -295,9 +315,13 @@ Delete one of the objects that you changed.
 
 _Can you still retrieve old versions of the object you removed?_
 
+#### yes, using --version-id
+
 ##### Question: Deleting All Versions
 
 _How would you delete all versions?_
+
+#### It appears that only the console, AWS SDK, and REST API can delete versions
 
 #### Lab 2.3.3: Tagging S3 Resources
 
@@ -309,6 +333,8 @@ through the CLI or the console.
 
 _Can you change a single tag on a bucket or object, or do you have to change
 all its tags at once?_
+
+#### Yes, a single tag on an object is possible.
 
 (See `aws:cloudformation:stack-id` and other AWS-managed tags.)
 
