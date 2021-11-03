@@ -1,0 +1,32 @@
+{
+"Rules": [
+    {
+        "ID": "Move to Infrequent Access after thirty days, Glacier after ninety days, Expire noncurrent object versions after 7 days, Remove all aborted multipart uploads after 1 day",
+        "Prefix": "",
+        "Filter": {
+            "Prefix": "trash/",
+            "Tag": {
+              "Key": "ringertag",
+              "Value": "test"
+            }
+        },
+        "Status": "Enabled",
+        "Transitions": [
+            {
+                "Days": 30,
+                "StorageClass": "STANDARD_IA"
+            },
+            {
+                "Days": 90,
+                "StorageClass": "GLACIER"
+            }
+        ],
+        "NoncurrentVersionExpiration": {
+            "NoncurrentDays": 7
+        },
+        "AbortIncompleteMultipartUpload": {
+            "DaysAfterInitiation": 1
+        }
+    }
+    ]
+}
