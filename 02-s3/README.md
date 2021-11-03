@@ -395,6 +395,8 @@ S3-managed key ("SSE-S3").
 
 _Do you need to re-upload all your files to get them encrypted?_
 
+#### You can copy a single object back to itself
+
 #### Lab 2.4.2: SSE with KMS Keys
 
 Change your bucket policy to require KMS encryption for all objects.
@@ -418,10 +420,14 @@ key.
 _Look through the [S3 encryption docs](https://docs.aws.amazon.com/AmazonS3/latest/dev/serv-side-encryption.html).
 What benefits might you gain by using a KMS key instead of an S3-managed key?_
 
+#### KMS keys offer an audit trail.
+
 ##### Question: Customer Managed CMK
 
 _Going further, what benefits might you gain by using a KMS key you created
 yourself?_
+
+#### It could be specific to you, your services, and your region.
 
 #### Lab 2.4.3: Using Your Own KMS Key
 
