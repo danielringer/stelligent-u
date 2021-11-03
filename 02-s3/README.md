@@ -357,6 +357,8 @@ _Management Lifecycle_ tab to double-check your settings.
 
 _Can you make any of these transitions more quickly?_
 
+#### Utilizing more prefixes could potentially increase performance especially if using parallelization.
+
 *See the [S3 lifecycle transitions doc](https://docs.aws.amazon.com/AmazonS3/latest/dev/lifecycle-transition-general-considerations.html).*
 
 ### Stretch Challenge
@@ -369,6 +371,8 @@ expire them after 1 day.
 *How could the lifecycle and versioning features of S3 be used to manage
 the lifecycle of a web application? Would you use those features to manage
 the webapp code itself, or just the app's data?*
+
+#### Versioning certainly could be used for the webapp code and the app's infrequently used data would benefit from using the appropriate storage classes.
 
 ## Lesson 2.4: S3 Object Encryption
 
