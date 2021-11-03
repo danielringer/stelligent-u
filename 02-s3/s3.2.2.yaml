@@ -1,0 +1,56 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: Create and assign IAM policy for maintenance access to me, grant public read access for all, private.txt blocked read access unless auth.
+
+Parameters:
+    BucketParameter:
+        Description: BucketParameter
+        Type: String
+    UserParameter:
+        Description: UserParameter
+        Type: String
+
+Resources:
+  Bucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Ref BucketParameter
+      VersioningConfiguration:
+        Status: Enabled
+
+  User:      
+    Type: AWS::IAM::User
+    Properties:
+      Path: "/"
+      UserName: !Ref UserParameter
+      LoginProfile:
+        Password: myP@ssW0rd
+
+  BucketPolicy:
+    Type: AWS::S3::BucketPolicy
+    Properties:
+      Bucket: !Ref Bucket
+      PolicyDocument:
+        Id: RingerS3Policy
+        Version: "2012-10-17"
+        Statement:
+        - Effect: Allow
+          Principal: "*"
+          Action:
+          - 's3:GetObject'
+          - 's3:GetObjectVersion'
+          Resource:
+            - !Sub arn:aws:s3:::${Bucket}
+            - !Sub arn:aws:s3:::${Bucket}/*
+        - Effect: Deny
+          Principal: "*"
+          Action:
+          - 's3:*'
+          Resource:
+            - !Sub arn:aws:s3:::${Bucket}/data/private-file.txt
+        - Effect: Allow
+          Principal:
+            AWS: !Sub arn:aws:iam::${AWS::AccountId}:user/ringer-s3adminuser
+          Action:
+          - 's3:*'
+          Resource:
+            - !Sub arn:aws:s3:::${Bucket}/data/private-file.txt
