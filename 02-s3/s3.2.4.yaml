@@ -67,3 +67,33 @@ Resources:
           Condition:
               StringNotEquals:
                 's3:x-amz-server-side-encryption-aws-kms-key-id': "arn:aws:kms:us-west-2:${AWS::AccountId}:key/*"
+
+  kmskey:
+    Type: 'AWS::KMS::Key'
+    Properties:
+      Description: My KMS key
+      EnableKeyRotation: true
+      PendingWindowInDays: 20
+      KeyPolicy:
+        Version: "2012-10-17"
+        Id: ringer-kms-key
+        Statement:
+          Sid: Enable IAM User Permissions
+          Effect: Allow
+          Principal:
+            AWS: !Sub arn:aws:iam::${AWS::AccountId}:user/ringer-s3adminuser
+          Action:
+            - 'kms:Encrypt'
+            - 'kms:Decrypt'
+            - 'kms:ReEncrypt*'
+            - 'kms:GenerateDataKey*'
+            - 'kms:CreateGrant'
+            - 'kms:ListGrants'
+            - 'kms:DescribeKey'
+          Resource: '*'
+
+  alias:
+  Type: 'AWS::KMS::Alias'
+  Properties:
+    AliasName: alias/ringerAlias
+    TargetKeyId: !Ref ringer-kms-key

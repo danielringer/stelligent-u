@@ -449,6 +449,8 @@ Use your own KMS key to encrypt files in S3.
 
 _Can you use the alias when uploading files?_
 
+#### I am unable to find where this can be done. The docs look to only allow for the key id.
+
 ### Retrospective 2.4
 
 #### Question: Requiring Encryption
@@ -456,9 +458,13 @@ _Can you use the alias when uploading files?_
 _After changing your bucket policy, can you upload files that aren't encrypted?
 If so, how would you require encryption on all files?_
 
+#### Place an effect:deny with the condition set for that a kms key must exist
+
 #### Question: Multiple Keys
 
 _Can you use different keys for different objects?_
+
+#### Yes, one KMS key can be tied to multiple buckets and one bucket can have objects encrypted with multiple keys.
 
 ## Further Reading
 

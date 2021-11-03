@@ -1,7 +1,7 @@
 [
     {
         "ParameterKey":"BucketParameter",
-        "ParameterValue": "gr-m02u2-train-use1"
+        "ParameterValue": "gr-m02u4-train-use1"
     },
     {
         "ParameterKey":"UserParameter",
