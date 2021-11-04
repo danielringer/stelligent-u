@@ -160,18 +160,33 @@ name.
 
 _Why do we prefer the YAML format for CFN templates?_
 
+#### The intrinsic functions
+
 #### Question: Protecting Resources
 
 _What else can you do to prevent resources in a stack from being deleted?_
 
 See [DeletionPolicy](https://aws.amazon.com/premiumsupport/knowledge-center/cloudformation-accidental-updates/).
 
+#### Use IAM to restrict users and utilize the DeletionPolicy attribute
+
 _How is that different from applying Termination Protection?_
+
+#### It not only prevents deletion but also prevents updates
 
 #### Task: String Substitution
 
 Demonstrate 2 ways to code string combination/substitution using
 built-in CFN functions.
+
+#### !Join
+#### &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;    - '-'
+#### &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;    - - 'stelligent'
+#### &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;      - 'U'
+#### &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;      - !Ref 'AWS::Region'
+#### &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;      - 'role'
+
+####  !Sub 'stelligent-U-${AWS::Region}-role
 
 ## Lesson 1.2: Integration with Other AWS Resources
 
@@ -227,12 +242,16 @@ Delete your CFN stacks in the same order you created them in. Did you
 succeed? If not, describe how you would _identify_ the problem, and
 resolve it yourself.
 
+#### I did not succeed. To diagnose, I went to the Cloudformation console and opened the events tab to find the failure. In this case, this stack cannot be deleted until the export dependency is removed from my second stack.
+
 ### Retrospective 1.2
 
 #### Task: Policy Tester
 
 Show how to use the IAM policy tester to demonstrate that the user
 cannot perform 'Put' actions on any S3 buckets.
+
+#### Utilizing the IAM Policy Simulator, I was able to select my user, choose a PUT action, and run a simulation. In this case, my user was appropriately denied.
 
 #### Task: SSM Parameter Store
 
@@ -317,6 +336,8 @@ functionality. Query S3 to ensure that the buckets have been deleted.
 
 _Can you list 4 features of CloudFormation that help make a CFN template
 portable code?_
+
+#### The usage of parameters, mappings, conditions, and imports
 
 #### Task: DRYer Code
 
