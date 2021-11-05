@@ -121,14 +121,14 @@ Add an object to your bucket:
 
 _How would you copy the contents of the directory to the top level of your bucket?_
 
-#### aws s3 cp --recursive data/* s3://stelligent-u-gringer/data
+#### aws s3 cp --recursive data/* s3://stelligent-u-gringer
 
 ##### Question: Directory Copying
 
 _How would you copy the contents and include the directory name in the s3 object
 paths?_
 
-#### aws s3 cp --recursive data/ s3://stelligent-u-gringer
+#### aws s3 cp --recursive data/* s3://stelligent-u-gringer/data
 
 ##### Question: Object Access
 
@@ -190,7 +190,7 @@ directory with the "aws s3 sync" command.
 _After this, can you download one of your files from the bucket without using
 your API credentials?_
 
-#### I was able to using --no-sign-request
+#### I was able to since the bucket is now "publicly readable"
 
 #### Lab 2.2.2: Use the CLI to Restrict Access to Private Data
 
@@ -211,7 +211,7 @@ permissions on the file?_
 
 _Is there a way you can change the permissions on the file without re-uploading it?_
 
-#### sync did not reupload the file
+#### yes, using put-object-acl --acl private
 
 #### Lab 2.2.3: Using the API from the CLI
 
@@ -240,7 +240,7 @@ file and read "private.txt".
 _What do you see when you try to read the existing bucket policy before you
 replace it?_
 
-#### Running get-bucket-policy shows the appropropriate policy I previously assigned
+#### Running get-bucket-policy threw an error that no such policy exists
 
 #### Question: Default Permissions
 
