@@ -168,6 +168,8 @@ stack's two roles in order to pass those values to the CLI function. You
 probably used the AWS web console to get the ARN for each role. What
 could you have done to your CFN template to make that unnecessary?_
 
+#### I was able to do this using 'Output:' with the value of '!GetAtt RingerRole.Arn', updated my stack, and then ran 'describe-stacks' 
+
 #### Task: Stack Outputs
 
 Institute that change from the Question above. Recreate the stack as per
