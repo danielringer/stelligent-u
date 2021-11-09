@@ -1,5 +1,5 @@
 AWSTemplateFormatVersion: 2010-09-09
-Description: Lab 3.1 - specify an IAM Role and give read-only access to all IAM resources.
+Description: Lab 3.1.1 - specify an IAM Role and give read-only access to all IAM resources.
 Resources:
   RingerRole:
     Type: 'AWS::IAM::Role'

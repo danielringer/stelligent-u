@@ -1,8 +1,21 @@
 AWSTemplateFormatVersion: 2010-09-09
-Description: Lab 3.1.2 - Customer Managed Policy.
+Description: Lab 3.1.3 - Customer Managed Policy Re-Use.
 Resources:
   RingerRole:
     Type: 'AWS::IAM::Role'
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              AWS: !Sub arn:aws:iam::${AWS::AccountId}:user/ringer-stelligent
+            Action:
+              - 'sts:AssumeRole'
+
+  RingerSecondRole:
+    Type: 'AWS::IAM::Role'
+    Description: Re-use policy
     Properties:
       AssumeRolePolicyDocument:
         Version: "2012-10-17"
@@ -31,3 +44,4 @@ Resources:
             Resource: "*"
       Roles:
         - !Ref RingerRole
+        - !Ref RingerSecondRole
