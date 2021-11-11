@@ -1,0 +1,27 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: Lab 3.3.1 - Unrestricted access to a service.
+Resources:
+  RingerRole:
+    Type: 'AWS::IAM::Role'
+    Properties:
+    RoleName: ringer-s3role
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              AWS: !Sub arn:aws:iam::${AWS::AccountId}:user/ringer-stelligent
+            Action:
+              - 'sts:AssumeRole'
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/AmazonS3FullAccess
+
+  RingerBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: gr-m03x3-bucket-one
+
+  RingerBucketTwo:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: gr-m03x3-bucket-two
