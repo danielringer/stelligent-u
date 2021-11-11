@@ -261,6 +261,8 @@ _In the context of an AWS User or Role, what is the difference between
 an inline policy and a customer managed policy? What are the differences
 between a customer managed policy and an AWS managed policy?_
 
+#### A customer managed policy can be attached to multiple principal entities where an inline policy is embedded and an inherent part of a user, group, or role. A customer managed policy is essentially an AWS managed policy customized to fit the customer's needs.
+
 #### Question: Role Assumption
 
 _When assuming a role, are the permissions of the initial principal
