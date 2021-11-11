@@ -370,10 +370,14 @@ _Is it possible to limit uploads of objects with a specific prefix (e.g.
 starting with "lebowski/") to an S3 bucket using IAM conditions? If not, how else
 could this be accomplished?_
 
+#### I was able to prevent uploads to S3 using a deny policy if the resource was not arn:aws:s3:::RingerBucket/lebowski/*
+
 #### Task: Limiting Uploads
 
 Research and review the best method to limit uploads with a specific prefix to
 an S3 bucket.
+
+#### I beleive my previous response is the best method.
 
 ## Further Reading
 
