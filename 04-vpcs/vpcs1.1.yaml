@@ -1,0 +1,49 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: 4.1.1 New VPC with "Private" Subnet
+
+Parameters:
+  CIDR16Parameter:
+    Description: CIDR16Parameter
+    Type: String
+  CIDR24Parameter:
+    Description: CIDR24Parameter
+    Type: String
+
+Resources:
+  VPC:
+    Type: AWS::EC2::VPC
+    Properties:
+      CidrBlock: !Ref CIDR16Parameter
+      Tags: 
+      - Key: "user"
+        Value: "gringer_aa"
+      - Key: "stelligent-u-lesson"
+        Value: "4"
+      - Key: "stelligent-u-lab"
+        Value: "4.1.1"
+
+  Subnet:
+    Type: 'AWS::EC2::Subnet'
+    Properties: 
+      CidrBlock: !Ref CIDR24Parameter
+      VpcId: !Ref VPC
+      Tags: 
+      - Key: "user"
+        Value: "gringer_aa"
+      - Key: "stelligent-u-lesson"
+        Value: "4"
+      - Key: "stelligent-u-lab"
+        Value: "4.1.1"
+
+Outputs:
+  VPCOutput:
+    Description: VPC ID
+    Value: !Ref VPC
+    Export:
+      Name: VPCID
+
+  EC2SubnetOutput:
+    Description: Subnet ID
+    Value: !Ref Subnet
+    Export:
+      Name: SubnetId

@@ -1,0 +1,10 @@
+[
+	{
+		"ParameterKey": "CIDR16Parameter",
+		"ParameterValue": "10.0.0.0/16"
+	},
+    {
+		"ParameterKey": "CIDR24Parameter",
+		"ParameterValue": "10.0.0.0/24"    
+    }
+]
