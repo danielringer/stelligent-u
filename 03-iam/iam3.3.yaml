@@ -14,7 +14,7 @@ Resources:
             Action:
               - 'sts:AssumeRole'
       Policies:
-        - PolicyName: ReadOnlyBucket1FullBucket2
+        - PolicyName: RingerReadOnlyBuc1AllBuc2
           PolicyDocument:
             Statement:
               - Effect: Allow
