@@ -1,0 +1,42 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: Lab 3.1.4 - AWS-Managed Policies.
+Resources:
+  RingerRole:
+    Type: 'AWS::IAM::Role'
+    Properties:
+      RoleName: "RingerRole"
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              AWS: !Sub arn:aws:iam::${AWS::AccountId}:user/ringer-stelligent
+            Action:
+              - 'sts:AssumeRole'
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/IAMReadOnlyAccess
+
+  RingerSecondRole:
+    Type: 'AWS::IAM::Role'
+    Description: Re-use policy
+    Properties:
+      RoleName: "RingerSecondRole"
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              AWS: !Sub arn:aws:iam::${AWS::AccountId}:user/ringer-stelligent
+            Action:
+              - 'sts:AssumeRole'
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/IAMReadOnlyAccess
+        - arn:aws:iam::aws:policy/AmazonEC2ReadOnlyAccess
+
+Outputs:
+  Role1Arn:
+    Description: ARN
+    Value: !GetAtt RingerRole.Arn
+  Role2Arn:
+    Description: ARN
+    Value: !GetAtt RingerSecondRole.Arn

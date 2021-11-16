@@ -168,6 +168,8 @@ stack's two roles in order to pass those values to the CLI function. You
 probably used the AWS web console to get the ARN for each role. What
 could you have done to your CFN template to make that unnecessary?_
 
+#### I was able to do this using 'Output:' with the value of '!GetAtt RingerRole.Arn', updated my stack, and then ran 'describe-stacks' 
+
 #### Task: Stack Outputs
 
 Institute that change from the Question above. Recreate the stack as per
@@ -258,6 +260,8 @@ Clean up. Take the actions necessary to delete the stack.
 _In the context of an AWS User or Role, what is the difference between
 an inline policy and a customer managed policy? What are the differences
 between a customer managed policy and an AWS managed policy?_
+
+#### A customer managed policy can be attached to multiple principal entities where an inline policy is embedded and an inherent part of a user, group, or role. A customer managed policy is essentially an AWS managed policy customized to fit the customer's needs.
 
 #### Question: Role Assumption
 
@@ -366,10 +370,14 @@ _Is it possible to limit uploads of objects with a specific prefix (e.g.
 starting with "lebowski/") to an S3 bucket using IAM conditions? If not, how else
 could this be accomplished?_
 
+#### I was able to prevent uploads to S3 using a deny policy if the resource was not arn:aws:s3:::RingerBucket/lebowski/*
+
 #### Task: Limiting Uploads
 
 Research and review the best method to limit uploads with a specific prefix to
 an S3 bucket.
+
+#### I beleive my previous response is the best method.
 
 ## Further Reading
 
