@@ -133,10 +133,14 @@ Launch an EC2 instance into your VPC.
 
 _After you launch your new stack, can you ssh to the instance?_
 
+#### I am getting a connection timeout error.
+
 ##### Question: Verify Connectivity
 
 _Is there a way that you can verify Internet connectivity from the instance
 without ssh'ing to it?_
+
+#### Attempt connection to the public IP address using a web browser.
 
 #### Lab 4.1.5: Security Group
 
@@ -147,6 +151,8 @@ Add a security group to your EC2 stack:
 ##### Question: Connectivity
 
 _Can you ssh to your instance yet?_
+
+#### Still gettting a connection timeout error.
 
 #### Lab 4.1.6: Elastic IP
 
