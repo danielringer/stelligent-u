@@ -14,6 +14,7 @@ Resources:
     Type: AWS::EC2::VPC
     Properties:
       CidrBlock: !Ref CIDR16Parameter
+      EnableDnsHostnames: 'true'
       Tags: 
       - Key: "user"
         Value: "gringer_aa"
@@ -49,11 +50,19 @@ Resources:
     Properties:
       VpcId: !Ref VPC
 
-  GatewayTableAssociation:
-    Type: AWS::EC2::GatewayRouteTableAssociation
+  PublicRoute:
+    Type: AWS::EC2::Route
+    DependsOn: AttachInternetGateway
     Properties:
-      GatewayId: !GetAtt InternetGateway.InternetGatewayId
       RouteTableId: !Ref RouteTable
+      DestinationCidrBlock: 0.0.0.0/0
+      GatewayId: !Ref InternetGateway  
+
+#  GatewayTableAssociation:
+#    Type: AWS::EC2::GatewayRouteTableAssociation
+#    Properties:
+#      GatewayId: !GetAtt InternetGateway.InternetGatewayId
+#      RouteTableId: !Ref RouteTable
 
   SubnetTableAssociation:
     Type: AWS::EC2::SubnetRouteTableAssociation

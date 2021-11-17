@@ -170,13 +170,19 @@ reachable from anywhere outside your VPC.
 
 _Can you ping your instance now?_
 
+#### Yes, I can finally SSH to the instance!
+
 ##### Question: SSH
 
 _Can you ssh into your instance now?_
 
+#### Yes, I can finally ping the instance!
+
 ##### Question: Traffic
 
 _If you can ssh, can you send any traffic (e.g. curl) out to the Internet?_
+
+#### Yes
 
 At this point, you've made your public EC2 instance an [ssh bastion](https://docs.aws.amazon.com/quickstart/latest/linux-bastion/architecture.html).
 We'll make use of that to explore your network below.
