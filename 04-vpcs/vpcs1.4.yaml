@@ -1,0 +1,45 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: 4.1.4 Test Instance
+Parameters:
+  LinuxAMI:
+    Type: String
+    Description: Amazon Linux AMI ID
+  InstanceType:
+    Type: String
+    Description: Instance Type
+  EC2KeyPair:
+    Type: String
+    Description: EC2 KeyPair
+
+Resources:
+  EC2:
+    Type: AWS::EC2::Instance
+    Properties: 
+      InstanceType: !Ref InstanceType
+      ImageId: !Ref LinuxAMI
+      KeyName: !Ref EC2KeyPair
+      Tags: 
+      - Key: "user"
+        Value: "gringer_aa"
+      - Key: "stelligent-u-lesson"
+        Value: "4"
+      - Key: "stelligent-u-lab"
+        Value: "4.1.4"
+      NetworkInterfaces:
+      - AssociatePublicIpAddress: True
+        DeleteOnTermination: True
+        SubnetId:
+          !ImportValue SubnetId
+        DeviceIndex: '0'
+
+Outputs:
+  InstanceID:
+    Description: Instance ID
+    Value: !Ref EC2
+    Export:
+      Name: Ringer-EC2-ID
+  InstancePrivateIP:
+    Description: EC2 Instance Privte IP address
+    Value: !GetAtt EC2.PrivateIp
+    Export:
+      Name: Ringer-EC2-Private-IP
