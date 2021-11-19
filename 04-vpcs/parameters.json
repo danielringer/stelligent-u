@@ -1,10 +1,14 @@
 [
 	{
-		"ParameterKey": "CIDR16Parameter",
+		"ParameterKey": "CIDR16ForVPCParameter",
 		"ParameterValue": "10.0.0.0/16"
 	},
     {
-		"ParameterKey": "CIDR24Parameter",
+		"ParameterKey": "CIDR24ForSubnetPublicParameter",
 		"ParameterValue": "10.0.0.0/24"    
+    },
+	{
+		"ParameterKey": "CIDR24ForSubnetPrivateParameter",
+		"ParameterValue": "10.0.10.0/24"    
     }
 ]

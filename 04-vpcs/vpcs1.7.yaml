@@ -1,5 +1,5 @@
 AWSTemplateFormatVersion: 2010-09-09
-Description: 4.1.6 Elastic IP
+Description: 4.1.7 NAT Gateway Instances
 Parameters:
   LinuxAMI:
     Type: String
@@ -20,7 +20,7 @@ Resources:
       KeyName: !Ref EC2KeyPair
       Tags: 
       - Key: "Name"
-        Value: "ringer-stelligent"
+        Value: "ringer-instance-one"
       - Key: "user"
         Value: "gringer_aa"
       - Key: "stelligent-u-lesson"
@@ -32,6 +32,30 @@ Resources:
         DeleteOnTermination: True
         SubnetId:
           !ImportValue SubnetId
+        DeviceIndex: '0'
+        GroupSet:
+          - Ref: SecurityGroup
+
+  EC2TWO:
+    Type: AWS::EC2::Instance
+    Properties: 
+      InstanceType: !Ref InstanceType
+      ImageId: !Ref LinuxAMI
+      KeyName: !Ref EC2KeyPair
+      Tags: 
+      - Key: "Name"
+        Value: "ringer-instance-Two"
+      - Key: "user"
+        Value: "gringer_aa"
+      - Key: "stelligent-u-lesson"
+        Value: "4"
+      - Key: "stelligent-u-lab"
+        Value: "4.1.4"
+      NetworkInterfaces:
+      - AssociatePublicIpAddress: True
+        DeleteOnTermination: True
+        SubnetId:
+          !ImportValue SubnetPrivateId
         DeviceIndex: '0'
         GroupSet:
           - Ref: SecurityGroup
@@ -67,7 +91,7 @@ Resources:
     Properties:
       RouteTableId: !Ref PrivateRouteTable
       DestinationCidrBlock: 0.0.0.0/0
-      GatewayId: !ImportValue IGExport   
+      GatewayId: !ImportValue IGExport  
 
 Outputs:
   InstanceID:

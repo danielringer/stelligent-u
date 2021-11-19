@@ -182,7 +182,7 @@ _Can you ssh into your instance now?_
 
 _If you can ssh, can you send any traffic (e.g. curl) out to the Internet?_
 
-#### Yes
+#### I was able to curl Google
 
 At this point, you've made your public EC2 instance an [ssh bastion](https://docs.aws.amazon.com/quickstart/latest/linux-bastion/architecture.html).
 We'll make use of that to explore your network below.
@@ -212,19 +212,27 @@ existing instance stack.
 
 _Can you find a way to ssh to this instance?_
 
+#### I was able to SSH to the instance by first ssh'ing to the EIP
+
 ##### Question: Egress
 
 _If you can ssh to it, can you send traffic out?_
+
+#### I was able to curl Google
 
 ##### Question: Deleting the Gateway
 
 _If you delete the NAT gateway, what happens to the ssh session on your private
 instance?_
 
+#### Nothing changed leading me to believe that this is not setup correctly but I have no way of knowing
+
 ##### Question: Recreating the Gateway
 
 _If you recreate the NAT gateway and detach the Elastic IP from the public EC2
 instance, can you still reach the instance from the outside?_
+
+#### Again, nothing changed... expecting to learn later that this was not implemented correctly.
 
 Test it out with the AWS console.
 

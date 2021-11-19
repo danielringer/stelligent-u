@@ -2,18 +2,18 @@ AWSTemplateFormatVersion: 2010-09-09
 Description: 4.1.2 Internet Gateway
 
 Parameters:
-  CIDR16Parameter:
-    Description: CIDR16Parameter
+  CIDR16ForVPCParameter:
+    Description: CIDR16ForVPCParameter
     Type: String
-  CIDR24Parameter:
-    Description: CIDR24Parameter
+  CIDR24ForSubnetPublicParameter:
+    Description: CIDR24ForSubnetPublicParameter
     Type: String
 
 Resources:
   VPC:
     Type: AWS::EC2::VPC
     Properties:
-      CidrBlock: !Ref CIDR16Parameter
+      CidrBlock: !Ref CIDR16ForVPCParameter
       EnableDnsHostnames: 'true'
       Tags: 
       - Key: "user"
@@ -26,7 +26,7 @@ Resources:
   Subnet:
     Type: 'AWS::EC2::Subnet'
     Properties: 
-      CidrBlock: !Ref CIDR24Parameter
+      CidrBlock: !Ref CIDR24ForSubnetPublicParameter
       VpcId: !Ref VPC
       Tags: 
       - Key: "user"
@@ -52,7 +52,8 @@ Resources:
 
   PublicRoute:
     Type: AWS::EC2::Route
-    DependsOn: AttachInternetGateway
+    #DependsOn: AttachInternetGateway
+    DependsOn: InternetGateway
     Properties:
       RouteTableId: !Ref RouteTable
       DestinationCidrBlock: 0.0.0.0/0
@@ -82,3 +83,9 @@ Outputs:
     Value: !Ref Subnet
     Export:
       Name: SubnetId
+
+  IGOutput:
+    Description: Internet gatewa
+    Value: !Ref InternetGateway
+    Export:
+      Name: IGExport
