@@ -1,0 +1,33 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: Lab 5.1.2 - Launch Two EC2 Instances
+
+Resources:
+  RingerWindowsTemplate:
+    Type: AWS::EC2::LaunchTemplate
+    Properties:
+      LaunchTemplateName: RingerWindowsTemplate
+      LaunchTemplateData:
+        ImageId: ami-0da7a37366e7ee5f0
+        InstanceType: t2.micro
+
+  RingerUbuntuTemplate:
+    Type: AWS::EC2::LaunchTemplate
+    Properties:
+      LaunchTemplateName: RingerUbuntuTemplate
+      LaunchTemplateData:
+        ImageId: ami-0b0ea68c435eb488d #ami-04b3c39a8a1c62b76
+        InstanceType: t2.micro
+
+  WindowsInstance:
+    Type: AWS::EC2::Instance
+    Properties:
+      LaunchTemplate:
+        LaunchTemplateId: !Ref RingerWindowsTemplate
+        Version: 1
+
+  UbuntuInstance:
+    Type: AWS::EC2::Instance
+    Properties:
+      LaunchTemplate:
+        LaunchTemplateId: !Ref RingerUbuntuTemplate
+        Version: 1
