@@ -1,0 +1,68 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: 5.2.1
+
+Resources:
+  EIP:
+    Type: AWS::EC2::EIP
+
+  VPC:
+    Type: AWS::EC2::VPC
+    Properties:
+      CidrBlock: 10.0.0.0/16
+      EnableDnsHostnames: 'true'
+
+  SubnetPublic:
+    Type: 'AWS::EC2::Subnet'
+    Properties: 
+      CidrBlock: 10.0.0.0/24
+      VpcId: !Ref VPC
+
+  InternetGateway:
+    Type: AWS::EC2::InternetGateway
+
+  AttachInternetGateway:
+    Type: AWS::EC2::VPCGatewayAttachment
+    Properties:
+      InternetGatewayId: !Ref InternetGateway
+      VpcId: !Ref VPC
+
+  RouteTablePublic:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref VPC
+      Tags:
+        - Key: Name
+          Value: "ringerRouteTablePublic"
+
+  PublicRoute:
+    Type: AWS::EC2::Route
+    DependsOn: AttachInternetGateway
+    Properties:
+      RouteTableId: !Ref RouteTablePublic
+      DestinationCidrBlock: 0.0.0.0/0
+      GatewayId: !Ref InternetGateway  
+
+  SubnetTableAssociationPublic:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: !Ref RouteTablePublic
+      SubnetId: !Ref SubnetPublic
+
+Outputs:
+  VPCOutput:
+    Description: VPC ID
+    Value: !Ref VPC
+    Export:
+      Name: VPCID
+
+  EC2SubnetOutput:
+    Description: Subnet ID
+    Value: !Ref SubnetPublic
+    Export:
+      Name: SubnetId
+
+  IGOutput:
+    Description: Internet gateway
+    Value: !Ref InternetGateway
+    Export:
+      Name: IGExport
