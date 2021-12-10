@@ -1,0 +1,201 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: 5.4.3
+
+#CloudWatch portion taken from https://github.com/awslabs/aws-cloudformation-templates/blob/master/aws/solutions/AmazonCloudWatchAgent/ssm/ubuntu.template
+
+Resources:
+  RingerUbuntu2Template:
+    Type: AWS::EC2::LaunchTemplate
+    Properties:
+      LaunchTemplateName: RingerUbuntu2Template
+      LaunchTemplateData:
+        ImageId: ami-0b0ea68c435eb488d #ami-04b3c39a8a1c62b76
+        InstanceType: t2.micro
+
+  CloudwatchRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - ec2.amazonaws.com
+            Action:
+              - 'sts:AssumeRole'
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/CloudWatchAgentServerPolicy
+
+  InstanceProfile:
+    Type: AWS::IAM::InstanceProfile
+    Properties:
+      InstanceProfileName: RingerInstanceProfile
+      Path: "/"
+      Roles:
+        - !Ref CloudwatchRole
+
+  EC2:
+    Type: AWS::EC2::Instance
+    Properties: 
+      LaunchTemplate:
+        LaunchTemplateId: !Ref RingerUbuntu2Template
+        Version: 1
+      KeyName: ringer-stelligent
+      Tags: 
+      - Key: "Name"
+        Value: "ringer-instance"
+      - Key: "user"
+        Value: "gringer_aa"
+      NetworkInterfaces:
+      - AssociatePublicIpAddress: True
+        DeleteOnTermination: True
+        SubnetId:
+          !ImportValue SubnetId
+        DeviceIndex: '0'
+        GroupSet:
+          - Ref: SecurityGroup
+
+      UserData:
+        Fn::Base64:
+          Fn::Sub:
+            - |
+              #!/bin/bash
+              wget https://s3.amazonaws.com/amazoncloudwatch-agent/ubuntu/amd64/latest/amazon-cloudwatch-agent.deb -O /tmp/amazon-cloudwatch-agent.deb
+              dpkg -i /tmp/amazon-cloudwatch-agent.deb
+              /opt/aws/amazon-cloudwatch-agent/bin/amazon-cloudwatch-agent-ctl -a fetch-config -m ec2 -c ssm:${ssmkey} -s
+              apt-get update -y
+              apt-get  install -y python-pip
+              easy_install --script-dir /opt/aws/bin  https://s3.amazonaws.com/cloudformation-examples/aws-cfn-bootstrap-latest.tar.gz
+              /opt/aws/bin/cfn-init -v --stack ${AWS::StackId} --resource EC2Instance --region ${AWS::Region} --configsets default
+              /opt/aws/bin/cfn-signal -e $? --stack ${AWS::StackId} --resource EC2Instance --region ${AWS::Region}
+              # create mount point directory
+              mkdir /mnt/xvdh
+              # create ext4 filesystem on new volume           
+              mkfs -t ext4 /dev/xvdh
+              # add an entry to fstab to mount volume during boot
+              echo "/dev/xvdh       /mnt/xvdh   ext4    defaults,nofail 0       2" >> /etc/fstab
+              # mount the volume on current boot
+              mount -a
+              echo simpletext >> /mnt/xvdh/simple2.txt
+            - { ssmkey: AmazonCloudWatch-DefaultLinuxConfigCloudFormation }
+
+    Metadata:
+      AWS::CloudFormation::Init:
+        configSets:
+          setup:
+            - 01_setupCfnHup
+            - 02_config-amazon-cloudwatch-agent
+            - 03_restart_amazon-cloudwatch-agent
+          UpdateEnvironment:
+            - 02_config-amazon-cloudwatch-agent
+            - 03_restart_amazon-cloudwatch-agent
+        # Definition of a dummy file, that change the contents of the dummy file can trigger the agent to reload the configuration from SSM parameter store.
+        02_config-amazon-cloudwatch-agent:
+          files:
+            '/opt/aws/amazon-cloudwatch-agent/etc/dummy.version':
+              content: !Sub |
+                "You can change the VERSION below to to simulate the update of metadata"
+                "VERSION=1.0"
+        # Invoke amazon-cloudwatch-agent-ctl to restart the AmazonCloudWatchAgent.
+        03_restart_amazon-cloudwatch-agent:
+          commands:
+            01_stop_service:
+              command: /opt/aws/amazon-cloudwatch-agent/bin/amazon-cloudwatch-agent-ctl -a stop
+            02_start_service:
+              command:
+                Fn::Sub:
+                  - |
+                    /opt/aws/amazon-cloudwatch-agent/bin/amazon-cloudwatch-agent-ctl -a fetch-config -m ec2 -c ssm:${ssmkey} -s
+                  - { ssmkey: AmazonCloudWatch-DefaultLinuxConfigCloudFormation }
+        # Cfn-hup setting, it is to monitor the change of metadata.
+        # When there is change in the contents of json file in the metadata section, cfn-hup will call cfn-init to restart the AmazonCloudWatchAgent.
+        01_setupCfnHup:
+          files:
+            '/etc/cfn/cfn-hup.conf':
+              content: !Sub |
+                [main]
+                stack=${AWS::StackId}
+                region=${AWS::Region}
+                interval=1
+              mode: '000400'
+              owner: root
+              group: root
+            '/etc/cfn/hooks.d/amazon-cloudwatch-agent-auto-reloader.conf':
+              content: !Sub |
+                [cfn-auto-reloader-hook]
+                triggers=post.update
+                path=Resources.EC2Instance.Metadata.AWS::CloudFormation::Init.02_config-amazon-cloudwatch-agent
+                action=/opt/aws/bin/cfn-init -v --stack ${AWS::StackId} --resource EC2Instance --region ${AWS::Region} --configsets UpdateEnvironment
+                runas=root
+              mode: '000400'
+              owner: root
+              group: root
+            "/lib/systemd/system/cfn-hup.service":
+                content: !Sub |
+                  [Unit]
+                  Description=cfn-hup daemon
+                  [Service]
+                  Type=simple
+                  ExecStart=/opt/aws/bin/cfn-hup
+                  Restart=always
+                  [Install]
+                  WantedBy=multi-user.target
+          commands:
+            01enable_cfn_hup:
+              command: !Sub |
+                systemctl enable cfn-hup.service
+            02start_cfn_hup:
+              command: !Sub |
+                systemctl start cfn-hup.service
+
+  Volume:
+    Type: AWS::EC2::Volume
+    Properties:
+      AvailabilityZone: !GetAtt EC2.AvailabilityZone
+      SnapshotId: snap-0e6511f55bdc44c94
+
+  MountPoint:
+    Type: AWS::EC2::VolumeAttachment
+    Properties:
+      InstanceId: !Ref EC2
+      VolumeId: !Ref Volume
+      Device: /dev/sdh
+
+  SecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Allow ICMP (for ping) and ssh traffic into your instance.
+      VpcId:
+        !ImportValue VPCID
+      SecurityGroupIngress:
+      - IpProtocol: tcp
+        FromPort: 22
+        ToPort: 22
+        CidrIp: 0.0.0.0/0
+      - IpProtocol: icmp 
+        FromPort: 8
+        ToPort: -1
+        CidrIp: 0.0.0.0/0
+
+  ElasticIP:
+    Type: AWS::EC2::EIP
+    Properties:
+      InstanceId: !Ref EC2
+
+Outputs:
+  InstanceID:
+    Description: Instance ID
+    Value: !Ref EC2
+    Export:
+      Name: Ringer-EC2-ID
+  InstancePrivateIP:
+    Description: EC2 Instance Privte IP address
+    Value: !GetAtt EC2.PrivateIp
+    Export:
+      Name: Ringer-EC2-Private-IP
+  InstancePublicIP:
+    Description: EC2 Instance Public IP address
+    Value: !GetAtt EC2.PublicIp
+    Export:
+      Name: Ringer-EC2-Public-IP
