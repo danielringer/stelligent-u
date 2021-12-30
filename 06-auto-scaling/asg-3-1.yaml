@@ -1,0 +1,62 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: Lab 6.3.1 - Simple Scale-Out
+
+Resources:
+  #RingerDebian:
+  #  Type: AWS::EC2::Instance
+  #  Properties:
+  #    LaunchTemplate:
+  #      LaunchTemplateId: !Ref RingerLaunchTemplate
+  #      Version: 1
+
+  RingerLaunchTemplate:
+    Type: AWS::EC2::LaunchTemplate
+    Properties: 
+      LaunchTemplateData: 
+        ImageId: ami-07d02ee1eeb0c996c  # Debian buster image
+        InstanceType: t2.micro
+        KeyName: ringer-stelligent
+        TagSpecifications:
+          - ResourceType: instance
+            Tags:
+              - Key: "Name"
+                Value: ringer-instance
+
+  RingerASG:
+    Type: AWS::AutoScaling::AutoScalingGroup
+    Properties:
+      AvailabilityZones: 
+        - us-east-1c
+      MaxSize: '1'
+      MinSize: '1'
+      DesiredCapacity: '1'
+      LaunchTemplate:
+        LaunchTemplateId: !Ref RingerLaunchTemplate
+        Version: 1
+    UpdatePolicy:
+      AutoScalingReplacingUpdate:
+        WillReplace: 'true'
+
+  ScalingPolicy:
+    Type: AWS::AutoScaling::ScalingPolicy
+    Properties: 
+      AdjustmentType: "ChangeInCapacity" #https://docs.aws.amazon.com/autoscaling/ec2/userguide/as-scaling-simple-step.html#as-scaling-adjustment
+      AutoScalingGroupName: !Ref RingerASG
+      PolicyType: "SimpleScaling"
+      ScalingAdjustment: 1 #Required for "SimpleScaling" only
+          
+  Alarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmActions:
+        - !Ref ScalingPolicy
+      MetricName: CPU Alarm
+      Namespace: AWS/EC2 #https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/aws-services-cloudwatch-metrics.html
+      Statistic: Average
+      Period: '120' #over 60 seconds
+      Threshold: '60' #60%
+      EvaluationPeriods: '1'
+      Dimensions:
+        - Name: AutoScalingGroupName
+          Value: !Ref RingerASG
+      ComparisonOperator: GreaterThanThreshold
