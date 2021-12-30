@@ -1,0 +1,9 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: Lab 6.1.1 - ASG from Instance
+
+Resources:
+  RingerDebian:
+    Type: AWS::EC2::Instance
+    Properties:
+      ImageId: ami-07d02ee1eeb0c996c # Debian buster image
+      InstanceType: t2.micro

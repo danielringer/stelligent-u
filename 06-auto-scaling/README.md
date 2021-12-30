@@ -107,6 +107,7 @@ Group (ASG): [ask Amazon to create one for us from a running instance](https://d
 ##### Question: Resources
 
 _What was created in addition to the new Auto Scaling Group?_
+#### A new instance was created.
 
 ##### Question: Parameters
 
