@@ -1,0 +1,104 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: Ringer Lambda
+Resources:
+  RingerHello:
+    Type: AWS::Lambda::Function
+    Properties:
+      Code:
+        ZipFile: |
+            exports.handler = async (event) => {
+              const response = {
+                  statusCode: 200,
+                  body: JSON.stringify('Hello AWS!'),
+              };
+              return response;
+            }
+      FunctionName: RingerHello
+      Handler: index.handler
+      Runtime: nodejs12.x
+      Role: !GetAtt LambdaRole.Arn
+      Tags:
+        - Key: Name
+          Value: RingerLambda
+
+  ApiMethod:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      AuthorizationType: NONE #says not required but it is
+      HttpMethod: ANY
+      Integration:
+        Type: AWS
+        IntegrationHttpMethod: POST
+        IntegrationResponses:
+          - StatusCode: '200'
+        Uri: !Sub 'arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${RingerHello.Arn}/invocations' #arn:aws:apigateway:region:lambda:path/path. The path is usually in the form /2015-03-31/functions/LambdaFunctionARN/invocations
+      MethodResponses:
+        - StatusCode: '200'
+      ResourceId: !GetAtt Api.RootResourceId
+      RestApiId: !Ref Api
+  
+  Api:
+    Type: AWS::ApiGateway::RestApi
+    Properties:
+      Name: Api
+      
+  ApiDeployment:
+    DependsOn: ApiMethod
+    Type: AWS::ApiGateway::Deployment
+    Properties:
+      RestApiId: !Ref Api
+      Description: RingerDeployment
+
+  LambdaRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+        - Effect: Allow
+          Principal:
+            Service:
+            - lambda.amazonaws.com
+          Action:
+            - 'sts:AssumeRole'
+      Policies:
+      - PolicyName: ringer-lambda-policy
+        PolicyDocument:
+          Version: '2012-10-17'
+          Statement:
+          - Effect: Allow
+            Action:
+            - logs:*
+            Resource: arn:aws:logs:*:*:*
+      RoleName: RingerLambdaRole
+      
+  RingerPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName: !GetAtt RingerHello.Arn
+      Principal: 'apigateway.amazonaws.com'
+      SourceArn: !Sub 'arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${Api}/*/*/'
+
+  MyDynamoDBTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      AttributeDefinitions:
+      - AttributeName: Stage
+        AttributeType: S
+      - AttributeName: Server
+        AttributeType: S
+      KeySchema:
+      - AttributeName: Stage
+        KeyType: HASH
+      - AttributeName: Server
+        KeyType: RANGE
+      TableName: Pipelines
+
+Outputs:
+  RingerHelloArn:
+    Value: !GetAtt RingerHello.Arn
+  ApiId:
+    Value: !Ref Api
+  ApiRootResourceId:
+    Value: !GetAtt Api.RootResourceId
