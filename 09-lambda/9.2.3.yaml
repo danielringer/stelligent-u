@@ -1,0 +1,224 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: Ringer Lambda
+Resources:
+  RingerHello:
+    Type: AWS::Lambda::Function
+    Properties:
+      Code:
+        ZipFile: |
+            import json
+            import boto3
+            client = boto3.client('dynamodb')
+            def handler(event, context):
+              data = client.scan(
+                TableName='Pipelines'
+              )
+              response = {
+                'statusCode': 200,
+                'body': json.dumps(data),
+                'headers': {
+                  'Content-Type': 'application/json',
+                  'Access-Control-Allow-Origin': '*'
+                },
+              }
+              
+              return response
+      FunctionName: RingerHello
+      Handler: index.handler
+      Runtime: python3.8
+      Role: !GetAtt LambdaRole.Arn
+      Tags:
+        - Key: Name
+          Value: RingerLambda
+
+  ApiMethod:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      AuthorizationType: NONE #says not required but it is
+      HttpMethod: ANY
+      Integration:
+        Type: AWS
+        IntegrationHttpMethod: POST
+        IntegrationResponses:
+          - StatusCode: '200'
+        Uri: !Sub 'arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${RingerHello.Arn}/invocations' #arn:aws:apigateway:region:lambda:path/path. The path is usually in the form /2015-03-31/functions/LambdaFunctionARN/invocations
+      MethodResponses:
+        - StatusCode: '200'
+      ResourceId: !GetAtt Api.RootResourceId
+      RestApiId: !Ref Api
+  
+  Api:
+    Type: AWS::ApiGateway::RestApi
+    Properties:
+      Name: Api
+      
+  ApiDeployment:
+    DependsOn: ApiMethod
+    Type: AWS::ApiGateway::Deployment
+    Properties:
+      RestApiId: !Ref Api
+      Description: RingerDeployment
+      StageName: RingerApiStage
+
+  LambdaRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+        - Effect: Allow
+          Principal:
+            Service:
+            - lambda.amazonaws.com
+          Action:
+            - 'sts:AssumeRole'
+      Policies:
+      - PolicyName: ringer-lambda-policy
+        PolicyDocument:
+          Version: '2012-10-17'
+          Statement:
+          - Effect: Allow
+            Action:
+              - lambda:*
+            Resource:
+              - '*'
+          - Effect: Allow
+            Action:
+              - logs:*
+              - dynamodb:*
+            Resource:
+              - '*'
+      RoleName: RingerLambdaRole
+      
+  RingerPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName: !GetAtt RingerHello.Arn
+      Principal: 'apigateway.amazonaws.com'
+      SourceArn: !Sub 'arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${Api}/*/*/'
+
+  LambdaPermission2:
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName: !GetAtt RingerHello.Arn
+      Principal: events.amazonaws.com
+      SourceArn: !Sub arn:aws:events:${AWS::Region}:${AWS::AccountId}:rule/*
+
+  ApiGatewayInvoke:
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName: !GetAtt RingerHello.Arn
+      Principal: apigateway.amazonaws.com
+      SourceArn: !Sub arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${Api}/RingerApiStage/POST/
+
+  DynamoDBTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      AttributeDefinitions:
+      - AttributeName: Stage
+        AttributeType: S
+      - AttributeName: Server
+        AttributeType: S
+      KeySchema:
+      - AttributeName: Stage
+        KeyType: HASH
+      - AttributeName: Server
+        KeyType: RANGE
+      ProvisionedThroughput:
+          ReadCapacityUnits: 5
+          WriteCapacityUnits: 5
+      TableName: Pipelines
+
+  Rule:
+    Type: AWS::Events::Rule
+    Properties: 
+      EventPattern: {
+          "source": ["aws.dynamodb"],
+          "detail-type": ["AWS API Call via CloudTrail"],
+          "detail": {
+            "eventSource": ["dynamodb.amazonaws.com"],
+            "eventName": ["put_item"]
+          }
+        }
+      Name: RingerRule
+      State: ENABLED
+      Targets: 
+        - Arn: !GetAtt RingerHello.Arn
+          Id: RingerRule
+
+  Bucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      Tags: 
+        - Key: Name
+          Value: RingerBucket
+
+  BucketPolicy:
+    Type: AWS::S3::BucketPolicy
+    Properties: 
+      Bucket: !Ref Bucket
+      PolicyDocument: 
+        Version: '2012-10-17'
+        Statement:
+        - Effect: Allow
+          Principal:
+            Service: cloudtrail.amazonaws.com
+          Action: s3:GetBucketAcl
+          Resource: 
+            !Join
+              - ''
+              - - 'arn:aws:s3:::'
+                - !Ref Bucket
+        - Effect: Allow
+          Principal:
+            Service: cloudtrail.amazonaws.com
+          Action: s3:PutObject
+          Resource:
+            !Join
+              - ''
+              - - 'arn:aws:s3:::'
+                - !Ref Bucket
+                - '/AWSLogs/'
+                - !Ref AWS::AccountId
+                - '/*'
+          Condition:
+            StringLike:
+              s3:x-amz-acl: bucket-owner-full-control
+              aws:SourceArn: 
+                !Join
+                  - ''
+                  - - 'arn:aws:cloudtrail:'
+                    - !Ref AWS::Region
+                    - ':'
+                    - !Ref AWS::AccountId
+                    - ':trail/*'
+
+  CloudTrail:
+    Type: AWS::CloudTrail::Trail
+    DependsOn:
+      - Bucket
+      - BucketPolicy
+    Properties: 
+      EventSelectors: 
+        - DataResources: 
+          - Type: AWS::S3::Object
+            Values: 
+              - "arn:aws:s3:::"
+      IsLogging: True
+      S3BucketName: !Ref Bucket
+      Tags: 
+        - Key: Name
+          Value: RingerTrail
+
+Outputs:
+  RingerHelloArn:
+    Value: !GetAtt RingerHello.Arn
+  ApiId:
+    Value: !Ref Api
+  ApiRootResourceId:
+    Value: !GetAtt Api.RootResourceId
+  apiGatewayInvokeURL:
+    Value: !Sub https://${Api}.execute-api.${AWS::Region}.amazonaws.com/RingerApiStage
