@@ -6,15 +6,16 @@ Resources:
     Properties:
       Code:
         ZipFile: |
-            import boto3
-            def handler(event, context):
-              client = boto3.resource('dynamodb')
-              table = client.Table("Pipelines")
-              print(table.table_status)
-              table.put_item(Item= {'Stage': 'Deploy','Server':  'Jobs'})
+            exports.handler = async (event) => {
+              const response = {
+                  statusCode: 200,
+                  body: JSON.stringify('Hello AWS!'),
+              };
+              return response;
+            }
       FunctionName: RingerHello
       Handler: index.handler
-      Runtime: python3.8
+      Runtime: nodejs12.x
       Role: !GetAtt LambdaRole.Arn
       Tags:
         - Key: Name
@@ -67,15 +68,8 @@ Resources:
           Statement:
           - Effect: Allow
             Action:
-              - lambda:*
-            Resource:
-              - '*'
-          - Effect: Allow
-            Action:
-              - logs:*
-              - dynamodb:*
-            Resource:
-              - '*'
+            - logs:*
+            Resource: arn:aws:logs:*:*:*
       RoleName: RingerLambdaRole
       
   RingerPermission:
@@ -86,7 +80,7 @@ Resources:
       Principal: 'apigateway.amazonaws.com'
       SourceArn: !Sub 'arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${Api}/*/*/'
 
-  DynamoDBTable:
+  MyDynamoDBTable:
     Type: AWS::DynamoDB::Table
     Properties:
       AttributeDefinitions:
@@ -99,9 +93,6 @@ Resources:
         KeyType: HASH
       - AttributeName: Server
         KeyType: RANGE
-      ProvisionedThroughput:
-          ReadCapacityUnits: 5
-          WriteCapacityUnits: 5
       TableName: Pipelines
 
 Outputs:
@@ -111,4 +102,3 @@ Outputs:
     Value: !Ref Api
   ApiRootResourceId:
     Value: !GetAtt Api.RootResourceId
-    
