@@ -1,0 +1,173 @@
+AWSTemplateFormatVersion: '2010-09-09'
+
+Parameters:
+  NameParam:
+    Type: AWS::SSM::Parameter::Name
+    Default: RingerName
+  TeamParam:
+    Type: AWS::SSM::Parameter::Value<String>
+    Default: RingerTeam
+  TimezoneParam:
+    Type: AWS::SSM::Parameter::Value<String>
+    Default: RingerTimeZone
+  StateParam:
+    Type: AWS::SSM::Parameter::Value<String>
+    Default: RingerState
+  StartDateParam:
+    Type: AWS::SSM::Parameter::Value<String>
+    Default: RingerStartDate
+
+Resources:
+  WebServerAsg: #Update the AutoScalingGroup to use 'ELB' for HealthCheckType and 30 for HealthCheckGracePeriod
+    Type: 'AWS::AutoScaling::AutoScalingGroup'
+    Properties:
+      TargetGroupARNs:
+        - !Ref TargetGroup
+      VPCZoneIdentifier:
+        - 'subnet-06add4a05f99fa0b1'
+        - 'subnet-0b1b4886031bb1486'
+      DesiredCapacity: '1'
+      HealthCheckType: 'ELB'
+      HealthCheckGracePeriod: 30 
+      LaunchConfigurationName: !Ref WebServersLC
+      MaxSize: '1'
+      MinSize: '1'
+
+  WebSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Ringer Web SG
+      VpcId: vpc-09519c2d03f379507
+      SecurityGroupIngress:
+      - IpProtocol: tcp
+        FromPort: 22
+        ToPort: 22
+        CidrIp: 0.0.0.0/0
+      - IpProtocol: "tcp"
+        FromPort: 80
+        ToPort: 80
+        CidrIp: "0.0.0.0/0"
+
+  LoadBalSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Ringer Loab Balancer SG
+      VpcId: vpc-09519c2d03f379507
+      SecurityGroupIngress:
+        - IpProtocol: "tcp"
+          FromPort: 80
+          ToPort: 80
+          CidrIp: "0.0.0.0/0"
+
+  WebServersLC:
+    Type: AWS::AutoScaling::LaunchConfiguration
+    Properties:
+      ImageId: 'ami-01cc34ab2709337aa' #'ami-0ff8a91507f77f867'
+      InstanceType: 't2.micro'
+      KeyName: ringer-stelligent
+      LaunchConfigurationName: 'RingerLaunchConfig'
+      SecurityGroups:
+        - !Ref 'WebSecurityGroup'
+      UserData: 
+        Fn::Base64:
+          Fn::Sub: |
+            #!/bin/bash -xe
+            sudo amazon-linux-extras install -y nginx1
+            sudo service nginx start
+            sudo echo "<ul><li>${NameParam}</li><li>${TeamParam}</li><li>${TimezoneParam}</li><li>${StateParam}</li><li>${StartDateParam}</li></ul>" > /usr/share/nginx/html/index.html
+
+  TargetGroup: #associate a target group with the autoscaling group, giving it a health check on /index.html.
+    Type: AWS::ElasticLoadBalancingV2::TargetGroup
+    Properties:
+      HealthCheckEnabled: true
+      HealthCheckIntervalSeconds: 20
+      HealthCheckPath: "/index.html"
+      HealthCheckPort: "traffic-port"
+      HealthCheckProtocol: "HTTP"
+      HealthCheckTimeoutSeconds: 5
+      HealthyThresholdCount: 2
+      Matcher: 
+        HttpCode: "200"
+      Port: 80
+      Protocol: HTTP
+      TargetType: instance
+      UnhealthyThresholdCount: 3
+      VpcId: vpc-09519c2d03f379507
+      TargetGroupAttributes:
+        - Key: deregistration_delay.timeout_seconds
+          Value: '20'
+
+  Listener: #Create an ALB Listener that references the previously created target group and ALB.
+    Type: AWS::ElasticLoadBalancingV2::Listener
+    Properties:
+      DefaultActions: 
+        - Order: 1
+          TargetGroupArn: !Ref TargetGroup
+          Type: "forward"
+      LoadBalancerArn: !Ref LoadBalancer
+      Port: 80
+      Protocol: "HTTP"
+      
+  HTTPSListener:
+   Type: "AWS::ElasticLoadBalancingV2::Listener"
+   Properties:
+      DefaultActions:
+        - Type: "forward"
+          TargetGroupArn: !Ref TargetGroup
+      LoadBalancerArn: !Ref LoadBalancer
+      Port: 443
+      Protocol: "HTTPS"
+      SslPolicy: "ELBSecurityPolicy-FS-1-2-Res-2020-10"
+      Certificates: 
+        - "arn:aws:acm:us-east-1:858633482938:certificate/b6b9b8f1-e261-4095-bbc8-c737694f910a"
+
+  ListenerRule:
+    Type: 'AWS::ElasticLoadBalancingV2::ListenerRule'
+    Properties:
+      Actions:
+        - Type: forward
+          TargetGroupArn: !Ref TargetGroup
+      ListenerArn: !Ref Listener
+      Conditions:
+        - Field: http-request-method
+          HttpRequestMethodConfig:
+            Values:
+              - POST
+              - GET
+      Priority: 2
+
+  LoadBalancer: #Create an internet-facing ALB
+    Type: AWS::ElasticLoadBalancingV2::LoadBalancer
+    Properties:
+      IpAddressType: "ipv4"
+      Name: "ringer-lb"
+      Scheme: "internet-facing"
+      SecurityGroups:
+        - !GetAtt LoadBalSecurityGroup.GroupId
+      Subnets:
+        - 'subnet-06add4a05f99fa0b1'
+        - 'subnet-0b1b4886031bb1486'
+      Type: "application"
+
+    Metadata:
+      'AWS::CloudFormation::Init':
+        configSets:
+          All:
+            - ConfigureStelligentProject
+        ConfigureStelligentProject:
+          packages:
+            yum:
+              nginx: []
+          files:
+            /usr/share/nginx/html/index.html:
+              content:
+                Fn::Sub: | 
+                  '<ul><li>${NameParam}</li><li>${TeamParam}</li><li>${TimezoneParam}</li><li>${StateParam}</li><li>${StartDateParam}</li></ul>'
+                  mode: '000644'
+                  owner: root
+                  group: root
+          services:
+            sysvinit:
+              nginx:
+                enabled: 'true'
+                ensureRunning: 'true'
