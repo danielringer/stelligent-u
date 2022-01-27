@@ -1,0 +1,41 @@
+AWSTemplateFormatVersion: 2010-09-09
+Resources: 
+  key:
+    Type: AWS::KMS::Key
+    Properties:
+      EnableKeyRotation: true
+      PendingWindowInDays: 20
+      KeyPolicy:
+        Version: '2012-10-17'
+        Id: ringer-key
+        Statement:
+        - Sid: Enable IAM User Permissions
+          Effect: Allow
+          Principal:
+            AWS: arn:aws:iam::858633482938:root
+          Action: kms:*
+          Resource: '*'
+        - Sid: Allow administration of the key
+          Effect: Allow
+          Principal:
+            AWS: arn:aws:iam::858633482938:user/gringer_aa
+          Action:
+          - kms:Create*
+          - kms:Describe*
+          - kms:Enable*
+          - kms:List*
+          - kms:Put*
+          - kms:Update*
+          - kms:Revoke*
+          - kms:Disable*
+          - kms:Get*
+          - kms:Delete*
+          - kms:ScheduleKeyDeletion
+          - kms:CancelKeyDeletion
+          Resource: '*'
+  
+  myAlias:
+    Type: AWS::KMS::Alias
+    Properties:
+      AliasName: alias/snazzy
+      TargetKeyId: !Ref key
