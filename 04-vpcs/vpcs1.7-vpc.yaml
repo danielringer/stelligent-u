@@ -162,3 +162,9 @@ Outputs:
     Value: !Ref InternetGateway
     Export:
       Name: IGExport
+
+  NatGatewayOutput:
+    Description: Nat gateway
+    Value: !Ref NatGateway
+    Export:
+      Name: NatGateway
