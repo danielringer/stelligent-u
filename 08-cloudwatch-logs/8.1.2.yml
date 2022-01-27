@@ -1,77 +1,111 @@
 AWSTemplateFormatVersion: "2010-09-09"
-Mappings:
-  RegionMap:
-    us-east-1:
-      vpcId: vpc-da3c10bc
-      subnetId: subnet-ec6f2c89
-      imageId: ami-04169656fea786776
-    us-east-2:
-      vpcId: vpc-9aa942f3
-      subnetId: subnet-8332c4ea
-      imageId: ami-0552e3455b9bc8d50
-    us-west-1:
-      vpcId: vpc-0c00d304ac554a97f
-      subnetId: subnet-05a1407456ad0c8e8
-      imageId: ami-059e7901352ebaef8
-    us-west-2:
-      vpcId: vpc-8bc484f2
-      subnetId: subnet-ebc60ca0
-      imageId: ami-51537029
+Parameters:
+  UbuntuAMI:
+    Type: "AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>"
+    Default: '/aws/service/canonical/ubuntu/server/20.04/stable/current/amd64/hvm/ebs-gp2/ami-id'
 Resources:
   LaunchTemplate:
     Type: AWS::EC2::LaunchTemplate
     Properties:
-      LaunchTemplateName: EC2LaunchTemplate
+      LaunchTemplateName: Ringer-EC2LaunchTemplate
       LaunchTemplateData:
-        InstanceType: t2.nano
+        InstanceType: t2.micro
+        ImageId: !Ref UbuntuAMI
+        KeyName: ringer-stelligent
         IamInstanceProfile: 
           Name: !Ref InstanceProfile
         NetworkInterfaces:
-          -
-            DeviceIndex: 0
+          - DeviceIndex: 0
             AssociatePublicIpAddress: True
-            SubnetId: !FindInMap [ RegionMap, !Ref "AWS::Region", subnetId ]
+            SubnetId: subnet-0b1b4886031bb1486
         UserData: 
           Fn::Base64: !Sub | 
             #!/bin/bash -xe
-            # Install the files and packages from the metadata
-            apt update -y
-            apt install -y python-setuptools
-            mkdir aws-cfn-bootstrap-latest
-            curl https://s3.amazonaws.com/cloudformation-examples/aws-cfn-bootstrap-latest.tar.gz | tar xz -C aws-cfn-bootstrap-latest --strip-components 1
-            easy_install aws-cfn-bootstrap-latest
-
-            /usr/local/bin/cfn-init -v \
-              --stack ${AWS::StackName} \
-              --resource EC2 \
-              --region ${AWS::Region}
-
-            /usr/local/bin/cfn-signal -e $? \
-              --stack ${AWS::StackName} \
-              --resource EC2 \
-              --region ${AWS::Region}
+            /usr/bin/apt-get update -y
+            /usr/bin/apt-get install -y python3-pip
+            python3 -m pip install https://s3.amazonaws.com/cloudformation-examples/aws-cfn-bootstrap-py3-2.0-9.tar.gz
+            /usr/local/bin/cfn-init -v --stack ${AWS::StackName} --resource EC2 --configsets default --region ${AWS::Region}
+            /usr/local/bin/cfn-signal --exit-code $? --stack ${AWS::StackName} --resource EC2  --region ${AWS::Region}
   EC2:
     Type: AWS::EC2::Instance
     Properties: 
+      Tags: 
+        - Key: Name
+          Value: ringer-instance
       LaunchTemplate: 
         LaunchTemplateId: !Ref LaunchTemplate
         Version: "1"
-      ImageId: !FindInMap [ RegionMap, !Ref "AWS::Region", imageId ]
-    CreationPolicy:
-      ResourceSignal:    
-        Count: 1
-        Timeout: PT5M
     Metadata: 
       AWS::CloudFormation::Init: 
-        config: 
+        configSets:
+          default:
+            - install
+            - config
+            - launch
+        install:
           sources: 
             /etc/cloudwatchagent: https://s3.amazonaws.com/amazoncloudwatch-agent/linux/amd64/latest/AmazonCloudWatchAgent.zip
           commands:
             installCloudwatch: 
               command: ./install.sh
               cwd: /etc/cloudwatchagent
-            launchCloudwatch: 
-              command: /opt/aws/amazon-cloudwatch-agent/bin/amazon-cloudwatch-agent-ctl -a fetch-config -m ec2 -s
+        config: 
+          files:
+            /opt/aws/amazon-cloudwatch-agent/amazon-cloudwatch-agent.json:
+              content: !Sub |
+                {
+                  "agent": {
+                    "metrics_collection_interval": 60,
+                    "run_as_user": "root"
+                  },
+                  "logs": {
+                    "logs_collected": {
+                      "files": {
+                        "collect_list": [
+                          {
+                            "file_path": "/var/log/**.log",
+                            "log_group_name": "ringer-logs",
+                            "log_stream_name": "ringer-log-stream"
+                          }
+                        ]
+                      }
+                    }
+                  },
+                  "metrics": {
+                    "append_dimensions": {
+                        "AutoScalingGroupName": "${!aws:AutoScalingGroupName}",
+                          "ImageId": "${!aws:ImageId}",
+                          "InstanceId": "${!aws:InstanceId}",
+                          "InstanceType": "${!aws:InstanceType}"
+                      },
+                    "metrics_collected": {
+                      "disk": {
+                        "measurement": [
+                          "used_percent"
+                        ],
+                        "metrics_collection_interval": 60,
+                        "resources": [
+                          "*"
+                        ]
+                      },
+                      "mem": {
+                        "measurement": [
+                          "mem_used_percent"
+                        ],
+                        "metrics_collection_interval": 60
+                      },
+                      "statsd": {
+                        "metrics_aggregation_interval": 60,
+                        "metrics_collection_interval": 10,
+                        "service_address": ":8125"
+                      }
+                    }
+                  }
+                }
+        launch:
+          commands:
+            launchCloudwatch:
+              command: /opt/aws/amazon-cloudwatch-agent/bin/amazon-cloudwatch-agent-ctl -a fetch-config -m ec2 -c file:/opt/aws/amazon-cloudwatch-agent/amazon-cloudwatch-agent.json -s
   InstanceProfile:
     Type: AWS::IAM::InstanceProfile
     Properties: 
@@ -83,6 +117,7 @@ Resources:
       ManagedPolicyArns:
         - arn:aws:iam::aws:policy/CloudWatchAgentServerPolicy
         - arn:aws:iam::aws:policy/service-role/AmazonEC2RoleforSSM
+        - arn:aws:iam::aws:policy/CloudWatchAgentAdminPolicy
       AssumeRolePolicyDocument: 
         Version: "2012-10-17"
         Statement: 
@@ -96,5 +131,5 @@ Resources:
   SecurityGroup:
     Type: AWS::EC2::SecurityGroup
     Properties: 
-      GroupDescription: Topic 5 - EC2 Lab
-      VpcId: !FindInMap [ RegionMap, !Ref "AWS::Region", vpcId ]
+      GroupDescription: ringer-SG
+      VpcId: vpc-09519c2d03f379507

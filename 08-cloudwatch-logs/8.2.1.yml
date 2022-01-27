@@ -1,0 +1,19 @@
+AWSTemplateFormatVersion: 2010-09-09
+Resources:
+  LogGroup: 
+    Type: AWS::Logs::LogGroup
+    Properties: 
+      RetentionInDays: 7
+      LogGroupName: ringer-logs-2
+
+  S3Bucket:
+    Type: 'AWS::S3::Bucket'
+    Properties:
+      BucketName: ringer-log-bucket
+
+  LogTrail: 
+    Type: AWS::CloudTrail::Trail
+    Properties: 
+      S3BucketName: !Ref S3Bucket
+      IsLogging: true
+      CloudWatchLogsLogGroupArn: !GetAtt LogGroup.Arn
