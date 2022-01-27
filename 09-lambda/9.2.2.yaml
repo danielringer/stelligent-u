@@ -7,11 +7,12 @@ Resources:
       Code:
         ZipFile: |
             import boto3
+            import json
             def handler(event, context):
               client = boto3.resource('dynamodb')
               table = client.Table("Pipelines")
-              print(table.table_status)
-              table.put_item(Item= {'Stage': 'Deploy','Server':  'Jobs'})
+              body = json.loads(json.dumps(event))
+              table.put_item(Item= {'Stage': body['value'],'Server':  'Jobs'})
       FunctionName: RingerHello
       Handler: index.handler
       Runtime: python3.8
@@ -47,6 +48,7 @@ Resources:
     Properties:
       RestApiId: !Ref Api
       Description: RingerDeployment
+      StageName: RingerApiStage
 
   LambdaRole:
     Type: AWS::IAM::Role
@@ -93,6 +95,14 @@ Resources:
       FunctionName: !GetAtt RingerHello.Arn
       Principal: events.amazonaws.com
       SourceArn: !Sub arn:aws:events:${AWS::Region}:${AWS::AccountId}:rule/*
+
+  ApiGatewayInvoke:
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName: !GetAtt RingerHello.Arn
+      Principal: apigateway.amazonaws.com
+      SourceArn: !Sub arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${Api}/RingerApiStage/POST/
 
   DynamoDBTable:
     Type: AWS::DynamoDB::Table
@@ -200,3 +210,5 @@ Outputs:
     Value: !Ref Api
   ApiRootResourceId:
     Value: !GetAtt Api.RootResourceId
+  apiGatewayInvokeURL:
+    Value: !Sub https://${Api}.execute-api.${AWS::Region}.amazonaws.com/RingerApiStage
