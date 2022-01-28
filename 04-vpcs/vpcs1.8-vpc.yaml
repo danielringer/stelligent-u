@@ -1,0 +1,164 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: 4.1.7 NAT Gateway VPC
+
+Parameters:
+  CIDR16ForVPCParameter:
+    Description: CIDR16ForVPCParameter
+    Type: String
+  CIDR24ForSubnetPublicParameter:
+    Description: CIDR24ForSubnetPublicParameter
+    Type: String
+  CIDR24ForSubnetPrivateParameter:
+    Description: CIDR24ForSubnetPrivateParameter
+    Type: String
+
+Resources:
+  EIP:
+    Type: AWS::EC2::EIP
+    Properties:
+      Tags: 
+      - Key: "Name"
+        Value: "ringer-stelligent-public"
+      - Key: "user"
+        Value: "gringer_aa"
+      - Key: "stelligent-u-lesson"
+        Value: "4"
+      - Key: "stelligent-u-lab"
+        Value: "4.1.7"
+
+  VPC:
+    Type: AWS::EC2::VPC
+    Properties:
+      CidrBlock: !Ref CIDR16ForVPCParameter
+      EnableDnsHostnames: 'true'
+      Tags: 
+      - Key: "user"
+        Value: "gringer_aa"
+      - Key: "stelligent-u-lesson"
+        Value: "4"
+      - Key: "stelligent-u-lab"
+        Value: "4.1.1"
+
+  SubnetPublic:
+    Type: 'AWS::EC2::Subnet'
+    Properties: 
+      CidrBlock: !Ref CIDR24ForSubnetPublicParameter
+      VpcId: !Ref VPC
+      Tags: 
+      - Key: "Name"
+        Value: "ringer-subnet-public"
+      - Key: "user"
+        Value: "gringer_aa"
+      - Key: "stelligent-u-lesson"
+        Value: "4"
+      - Key: "stelligent-u-lab"
+        Value: "4.1.1"
+
+  InternetGateway:
+    Type: AWS::EC2::InternetGateway
+
+  AttachInternetGateway:
+    Type: AWS::EC2::VPCGatewayAttachment
+    Properties:
+      InternetGatewayId: !Ref InternetGateway
+      VpcId: !Ref VPC
+
+  RouteTablePublic:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref VPC
+      Tags:
+        - Key: Name
+          Value: "ringerRouteTablePublic"
+
+  PublicRoute:
+    Type: AWS::EC2::Route
+    DependsOn: AttachInternetGateway
+    Properties:
+      RouteTableId: !Ref RouteTablePublic
+      DestinationCidrBlock: 0.0.0.0/0
+      GatewayId: !Ref InternetGateway  
+
+  SubnetTableAssociationPublic:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: !Ref RouteTablePublic
+      SubnetId: !Ref SubnetPublic
+
+  SubnetPrivate:
+    Type: 'AWS::EC2::Subnet'
+    Properties: 
+      CidrBlock: !Ref CIDR24ForSubnetPrivateParameter
+      VpcId: !Ref VPC
+      Tags: 
+      - Key: "Name"
+        Value: "ringer-subnet-private"
+      - Key: "user"
+        Value: "gringer_aa"
+      - Key: "stelligent-u-lesson"
+        Value: "4"
+      - Key: "stelligent-u-lab"
+        Value: "4.1.7"
+
+  NatGateway:
+    Type: AWS::EC2::NatGateway
+    Properties:
+      AllocationId: !GetAtt EIP.AllocationId
+      SubnetId:
+        !Ref SubnetPrivate
+      Tags: 
+      - Key: "Name"
+        Value: "ringer-NatGateway"
+      - Key: "user"
+        Value: "gringer_aa"
+      - Key: "stelligent-u-lesson"
+        Value: "4"
+      - Key: "stelligent-u-lab"
+        Value: "4.1.7"
+
+  RouteTablePrivate:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref VPC
+      Tags:
+        - Key: Name
+          Value: "ringerRouteTablePrivate"
+
+  PrivateRoute:
+    Type: AWS::EC2::Route
+    DependsOn: InternetGateway
+    Properties:
+      RouteTableId: !Ref RouteTablePrivate
+      DestinationCidrBlock: 0.0.0.0/0
+      NatGatewayId: !Ref NatGateway
+
+  SubnetTableAssociationPrivate:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: !Ref RouteTablePrivate
+      SubnetId: !Ref SubnetPrivate
+
+Outputs:
+  VPCOutput:
+    Description: VPC ID
+    Value: !Ref VPC
+    Export:
+      Name: VPCID
+
+  EC2SubnetOutput:
+    Description: Subnet ID
+    Value: !Ref SubnetPublic
+    Export:
+      Name: SubnetId
+
+  EC2SubnetPrivateOutput:
+    Description: Subnet ID
+    Value: !Ref SubnetPrivate
+    Export:
+      Name: SubnetPrivateId
+
+  IGOutput:
+    Description: Internet gateway
+    Value: !Ref InternetGateway
+    Export:
+      Name: IGExport

@@ -165,6 +165,8 @@ _When updating a Stack containing an EC2 instance,
 [what other changes](https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/using-cfn-updating-stacks-update-behaviors.html)
 will cause the same thing to occur as in Lab 5.1.3?_
 
+#### Updating an availability zone will also result in a replacement.
+
 ## Lesson 5.2: Instance Access
 
 ### Principle 5.2
@@ -410,6 +412,19 @@ snapshot.
   Snapshot of that same volume.
 
 Use the AWS CLI to describe the newly-created EBS Snapshot. Save the output.
+
+{
+    "Description": "ringer volume snapshot",
+    "Encrypted": false,
+    "OwnerId": "858633482938",
+    "Progress": "",
+    "SnapshotId": "snap-0e6511f55bdc44c94",
+    "StartTime": "2021-12-10T18:30:46.708000+00:00",
+    "State": "pending",
+    "VolumeId": "vol-06c77eda08497acf8",
+    "VolumeSize": 100,
+    "Tags": []
+}
 
 #### Lab 5.4.3: Attaching Snapshots
 

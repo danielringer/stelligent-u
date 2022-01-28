@@ -1,0 +1,14 @@
+[
+	{
+		"ParameterKey": "InstanceType",
+		"ParameterValue": "t2.micro"
+	},
+    {
+		"ParameterKey": "LinuxAMI",
+		"ParameterValue": "ami-05140002baea15dd3"    
+    },
+	{
+		"ParameterKey": "EC2KeyPair",
+		"ParameterValue": "ringer-stelligent"  
+	}
+]
